@@ -1,0 +1,284 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\Product;
+use App\Models\ProductImage;
+use App\Models\Category;
+use App\Models\SubCategory;
+use App\Models\Segment;
+use App\Models\SubSegment;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Yajra\DataTables\Facades\DataTables;
+
+class ProductController extends Controller
+{
+    public function index(Request $request)
+    {
+        if ($request->ajax()) {
+            $products = Product::with(['category', 'subCategory', 'segment', 'subSegment', 'images']);
+            
+            if ($request->filled('category_id')) {
+                $products->where('category_id', $request->category_id);
+            }
+            
+            return DataTables::of($products)
+                ->addColumn('action', function ($product) {
+                    return view('admin.products.actions', compact('product'));
+                })
+                ->addColumn('image', function ($product) {
+                    if ($product->main_image_url) {
+                        return '<img src="' . $product->main_image_url . '" width="50" height="50" class="rounded object-cover">';
+                    }
+                    return '<div class="bg-gray-200 w-12 h-12 rounded flex items-center justify-content-center"><i class="fas fa-image text-gray-400"></i></div>';
+                })
+                ->addColumn('image_count', function ($product) {
+                    $count = $product->getImageCount();
+                    return $count > 0 ? '<span class="badge bg-info">' . $count . ' images</span>' : '<span class="badge bg-secondary">No images</span>';
+                })
+                ->addColumn('category_hierarchy', function ($product) {
+                    return $product->category->title . ' > ' . 
+                           $product->subCategory->title . ' > ' . 
+                           $product->segment->title . ' > ' . 
+                           $product->subSegment->title;
+                })
+                ->editColumn('price', function ($product) {
+                    return '₹' . number_format($product->price, 2);
+                })
+                ->addColumn('status', function ($product) {
+                    return $product->status ? 
+                        '<span class="badge bg-success">Active</span>' : 
+                        '<span class="badge bg-danger">Inactive</span>';
+                })
+                ->rawColumns(['action', 'image', 'image_count', 'status'])
+                ->make(true);
+        }
+
+        $categories = Category::all();
+        return view('admin.products.index', compact('categories'));
+    }
+
+    public function create()
+    {
+        $categories = Category::all();
+        return view('admin.products.create', compact('categories'));
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'title' => 'required|max:255|unique:products,title',
+            'short_description' => 'required',
+            'price' => 'required|numeric|min:0',
+            'product_details' => 'required',
+            'category_id' => 'required|exists:categories,id',
+            'sub_category_id' => 'required|exists:sub_categories,id',
+            'segment_id' => 'required|exists:segments,id',
+            'sub_segment_id' => 'required|exists:sub_segments,id',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'alt_texts.*' => 'nullable|string|max:255'
+        ]);
+
+        DB::beginTransaction();
+        
+        try {
+            // Create product
+            $product = Product::create($request->except(['images', 'alt_texts']));
+            
+            // Handle image uploads
+            if ($request->hasFile('images')) {
+                $this->uploadProductImages($product, $request->file('images'), $request->input('alt_texts', []));
+            }
+            
+            DB::commit();
+            
+            return redirect()->route('admin.products.index')
+                ->with('success', 'Product created successfully.');
+                
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->with('error', 'Error creating product: ' . $e->getMessage())->withInput();
+        }
+    }
+
+    public function show(Product $product)
+    {
+        $product->load(['category', 'subCategory', 'segment', 'subSegment', 'images']);
+        return view('admin.products.show', compact('product'));
+    }
+
+    public function edit(Product $product)
+    {
+        $categories = Category::all();
+        $subCategories = SubCategory::where('category_id', $product->category_id)->get();
+        $segments = Segment::where('sub_category_id', $product->sub_category_id)->get();
+        $subSegments = SubSegment::where('segment_id', $product->segment_id)->get();
+        
+        $product->load('images');
+        
+        return view('admin.products.edit', compact('product', 'categories', 'subCategories', 'segments', 'subSegments'));
+    }
+
+    public function update(Request $request, Product $product)
+    {
+        $request->validate([
+            'title' => 'required|max:255|unique:products,title,' . $product->id,
+            'short_description' => 'required',
+            'price' => 'required|numeric|min:0',
+            'product_details' => 'required',
+            'category_id' => 'required|exists:categories,id',
+            'sub_category_id' => 'required|exists:sub_categories,id',
+            'segment_id' => 'required|exists:segments,id',
+            'sub_segment_id' => 'required|exists:sub_segments,id',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'alt_texts.*' => 'nullable|string|max:255'
+        ]);
+
+        DB::beginTransaction();
+        
+        try {
+            // Update product
+            $product->update($request->except(['images', 'alt_texts', 'remove_images']));
+            
+            // Handle image removal
+            if ($request->filled('remove_images')) {
+                $this->removeProductImages($request->input('remove_images'));
+            }
+            
+            // Handle new image uploads
+            if ($request->hasFile('images')) {
+                $this->uploadProductImages($product, $request->file('images'), $request->input('alt_texts', []));
+            }
+            
+            DB::commit();
+            
+            return redirect()->route('admin.products.index')
+                ->with('success', 'Product updated successfully.');
+                
+        } catch (\Exception $e) {
+            DB::rollback();
+            return back()->with('error', 'Error updating product: ' . $e->getMessage())->withInput();
+        }
+    }
+
+    public function destroy(Product $product)
+    {
+        try {
+            $product->delete(); // This will trigger the model boot method to delete images
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error deleting product.']);
+        }
+    }
+
+    // Image management methods
+    public function removeImage(Request $request)
+    {
+        $request->validate([
+            'image_id' => 'required|exists:product_images,id'
+        ]);
+
+        try {
+            $image = ProductImage::findOrFail($request->image_id);
+            $productId = $image->product_id;
+            $wasPrimary = $image->is_primary;
+            
+            $image->delete();
+            
+            // If the deleted image was primary, set the next image as primary
+            if ($wasPrimary) {
+                $nextImage = ProductImage::where('product_id', $productId)->ordered()->first();
+                if ($nextImage) {
+                    $nextImage->update(['is_primary' => true]);
+                }
+            }
+            
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error removing image.']);
+        }
+    }
+
+    public function setPrimaryImage(Request $request)
+    {
+        $request->validate([
+            'image_id' => 'required|exists:product_images,id'
+        ]);
+
+        try {
+            $image = ProductImage::findOrFail($request->image_id);
+            ProductImage::setPrimaryImage($image->product_id, $image->id);
+            
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error setting primary image.']);
+        }
+    }
+
+    public function updateImageOrder(Request $request)
+    {
+        $request->validate([
+            'images' => 'required|array',
+            'images.*.id' => 'required|exists:product_images,id',
+            'images.*.sort_order' => 'required|integer|min:0'
+        ]);
+
+        try {
+            foreach ($request->input('images') as $imageData) {
+                ProductImage::where('id', $imageData['id'])
+                    ->update(['sort_order' => $imageData['sort_order']]);
+            }
+            
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error updating image order.']);
+        }
+    }
+
+    // Private helper methods
+    private function uploadProductImages(Product $product, array $images, array $altTexts = [])
+    {
+        $sortOrder = ProductImage::where('product_id', $product->id)->max('sort_order') ?? -1;
+        
+        foreach ($images as $index => $image) {
+            $path = $image->store('products', 'public');
+            $sortOrder++;
+            
+            ProductImage::create([
+                'product_id' => $product->id,
+                'image_path' => $path,
+                'alt_text' => $altTexts[$index] ?? $product->title,
+                'sort_order' => $sortOrder,
+                'is_primary' => false // Will be set automatically by model boot method if it's the first image
+            ]);
+        }
+    }
+
+    private function removeProductImages(array $imageIds)
+    {
+        $images = ProductImage::whereIn('id', $imageIds)->get();
+        
+        foreach ($images as $image) {
+            $image->delete();
+        }
+    }
+
+    // AJAX endpoints for dependent dropdowns (unchanged)
+    public function getSubCategories($categoryId)
+    {
+        return SubCategory::where('category_id', $categoryId)->get();
+    }
+
+    public function getSegments($subCategoryId)
+    {
+        return Segment::where('sub_category_id', $subCategoryId)->get();
+    }
+
+    public function getSubSegments($segmentId)
+    {
+        return SubSegment::where('segment_id', $segmentId)->get();
+    }
+}

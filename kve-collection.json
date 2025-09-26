@@ -1,0 +1,825 @@
+{
+  "info": {
+    "name": "Laravel Admin Panel APIs",
+    "description": "Complete API collection for Category Hierarchy and Products with filtering capabilities",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "category_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "sub_category_id", 
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "segment_id",
+      "value": "1", 
+      "type": "string"
+    },
+    {
+      "key": "sub_segment_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "product_id",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "📁 Categories",
+      "item": [
+        {
+          "name": "Get All Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type", 
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categories?per_page=20&search=welding",
+              "host": ["{{base_url}}"],
+              "path": ["categories"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "20",
+                  "description": "Number of items per page"
+                },
+                {
+                  "key": "search",
+                  "value": "welding",
+                  "description": "Search in category title",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1", 
+                  "description": "Page number",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Retrieve all categories with pagination and search functionality"
+          }
+        },
+        {
+          "name": "Get Single Category",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categories/{{category_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["categories", "{{category_id}}"]
+            },
+            "description": "Get single category with sub-categories and counts"
+          }
+        },
+        {
+          "name": "Get Category Sub-Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categories/{{category_id}}/sub-categories",
+              "host": ["{{base_url}}"],
+              "path": ["categories", "{{category_id}}", "sub-categories"]
+            },
+            "description": "Get all sub-categories for a specific category"
+          }
+        },
+        {
+          "name": "Get Category Hierarchy",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/categories/{{category_id}}/hierarchy",
+              "host": ["{{base_url}}"],
+              "path": ["categories", "{{category_id}}", "hierarchy"]
+            },
+            "description": "Get complete hierarchy for a category (category > sub-categories > segments > sub-segments)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📁 Sub Categories",
+      "item": [
+        {
+          "name": "Get All Sub Categories",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sub-categories?category_id={{category_id}}&per_page=20&search=manual",
+              "host": ["{{base_url}}"],
+              "path": ["sub-categories"],
+              "query": [
+                {
+                  "key": "category_id",
+                  "value": "{{category_id}}",
+                  "description": "Filter by category ID",
+                  "disabled": true
+                },
+                {
+                  "key": "per_page",
+                  "value": "20"
+                },
+                {
+                  "key": "search",
+                  "value": "manual",
+                  "description": "Search in title",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all sub-categories with optional category filter"
+          }
+        },
+        {
+          "name": "Get Single Sub Category",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sub-categories/{{sub_category_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["sub-categories", "{{sub_category_id}}"]
+            },
+            "description": "Get single sub-category with category and segments"
+          }
+        },
+        {
+          "name": "Get Sub Category Segments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sub-categories/{{sub_category_id}}/segments",
+              "host": ["{{base_url}}"],
+              "path": ["sub-categories", "{{sub_category_id}}", "segments"]
+            },
+            "description": "Get all segments for a sub-category"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📁 Segments",
+      "item": [
+        {
+          "name": "Get All Segments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/segments?sub_category_id={{sub_category_id}}&category_id={{category_id}}&per_page=20",
+              "host": ["{{base_url}}"],
+              "path": ["segments"],
+              "query": [
+                {
+                  "key": "sub_category_id",
+                  "value": "{{sub_category_id}}",
+                  "description": "Filter by sub-category",
+                  "disabled": true
+                },
+                {
+                  "key": "category_id",
+                  "value": "{{category_id}}",
+                  "description": "Filter by category",
+                  "disabled": true
+                },
+                {
+                  "key": "per_page",
+                  "value": "20"
+                },
+                {
+                  "key": "search",
+                  "value": "arc",
+                  "description": "Search in title",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all segments with filtering options"
+          }
+        },
+        {
+          "name": "Get Single Segment",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/segments/{{segment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["segments", "{{segment_id}}"]
+            },
+            "description": "Get single segment with hierarchy and sub-segments"
+          }
+        },
+        {
+          "name": "Get Segment Sub-Segments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/segments/{{segment_id}}/sub-segments",
+              "host": ["{{base_url}}"],
+              "path": ["segments", "{{segment_id}}", "sub-segments"]
+            },
+            "description": "Get all sub-segments for a segment"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📁 Sub Segments",
+      "item": [
+        {
+          "name": "Get All Sub Segments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sub-segments?segment_id={{segment_id}}&sub_category_id={{sub_category_id}}&category_id={{category_id}}&per_page=20",
+              "host": ["{{base_url}}"],
+              "path": ["sub-segments"],
+              "query": [
+                {
+                  "key": "segment_id",
+                  "value": "{{segment_id}}",
+                  "description": "Filter by segment",
+                  "disabled": true
+                },
+                {
+                  "key": "sub_category_id",
+                  "value": "{{sub_category_id}}",
+                  "description": "Filter by sub-category",
+                  "disabled": true
+                },
+                {
+                  "key": "category_id",
+                  "value": "{{category_id}}",
+                  "description": "Filter by category",
+                  "disabled": true
+                },
+                {
+                  "key": "per_page",
+                  "value": "20"
+                },
+                {
+                  "key": "search",
+                  "value": "mig",
+                  "description": "Search in title",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all sub-segments with multi-level filtering"
+          }
+        },
+        {
+          "name": "Get Single Sub Segment",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/sub-segments/{{sub_segment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["sub-segments", "{{sub_segment_id}}"]
+            },
+            "description": "Get single sub-segment with complete hierarchy"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📁 Products",
+      "item": [
+        {
+          "name": "Get All Products",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/products?per_page=20&page=1&sort_by=created_at&sort_order=desc",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "20",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "sort_by",
+                  "value": "created_at",
+                  "description": "Sort field: title|price|created_at|updated_at"
+                },
+                {
+                  "key": "sort_order",
+                  "value": "desc",
+                  "description": "Sort order: asc|desc"
+                },
+                {
+                  "key": "search",
+                  "value": "welder",
+                  "description": "Search in title and description",
+                  "disabled": true
+                },
+                {
+                  "key": "category_id",
+                  "value": "{{category_id}}",
+                  "description": "Filter by category",
+                  "disabled": true
+                },
+                {
+                  "key": "sub_category_id",
+                  "value": "{{sub_category_id}}",
+                  "description": "Filter by sub-category",
+                  "disabled": true
+                },
+                {
+                  "key": "segment_id",
+                  "value": "{{segment_id}}",
+                  "description": "Filter by segment",
+                  "disabled": true
+                },
+                {
+                  "key": "sub_segment_id",
+                  "value": "{{sub_segment_id}}",
+                  "description": "Filter by sub-segment",
+                  "disabled": true
+                },
+                {
+                  "key": "min_price",
+                  "value": "100",
+                  "description": "Minimum price",
+                  "disabled": true
+                },
+                {
+                  "key": "max_price",
+                  "value": "5000",
+                  "description": "Maximum price",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get all products with comprehensive filtering and pagination"
+          }
+        },
+        {
+          "name": "Get Single Product",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/products/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["products", "{{product_id}}"]
+            },
+            "description": "Get single product with full details, images, and hierarchy"
+          }
+        },
+        {
+          "name": "Get Products by Category",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/products/category/{{category_id}}?per_page=20&search=power&min_price=500&max_price=2000",
+              "host": ["{{base_url}}"],
+              "path": ["products", "category", "{{category_id}}"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "20"
+                },
+                {
+                  "key": "search",
+                  "value": "power",
+                  "description": "Search in title and description",
+                  "disabled": true
+                },
+                {
+                  "key": "min_price",
+                  "value": "500",
+                  "description": "Minimum price filter",
+                  "disabled": true
+                },
+                {
+                  "key": "max_price",
+                  "value": "2000",
+                  "description": "Maximum price filter",
+                  "disabled": true
+                },
+                {
+                  "key": "sort_by",
+                  "value": "price",
+                  "description": "Sort by price",
+                  "disabled": true
+                },
+                {
+                  "key": "sort_order",
+                  "value": "asc",
+                  "description": "Ascending order",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get products filtered by category with additional filters"
+          }
+        },
+        {
+          "name": "Get Products by Sub Category",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/products/sub-category/{{sub_category_id}}?per_page=15",
+              "host": ["{{base_url}}"],
+              "path": ["products", "sub-category", "{{sub_category_id}}"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "15"
+                },
+                {
+                  "key": "search",
+                  "value": "manual",
+                  "disabled": true
+                },
+                {
+                  "key": "sort_by",
+                  "value": "title",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Get products filtered by sub-category"
+          }
+        },
+        {
+          "name": "Get Products by Segment",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/products/segment/{{segment_id}}?per_page=10",
+              "host": ["{{base_url}}"],
+              "path": ["products", "segment", "{{segment_id}}"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get products filtered by segment"
+          }
+        },
+        {
+          "name": "Get Products by Sub Segment",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/products/sub-segment/{{sub_segment_id}}?per_page=25",
+              "host": ["{{base_url}}"],
+              "path": ["products", "sub-segment", "{{sub_segment_id}}"],
+              "query": [
+                {
+                  "key": "per_page",
+                  "value": "25"
+                }
+              ]
+            },
+            "description": "Get products filtered by sub-segment"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📁 Navbar & Special Endpoints",
+      "item": [
+        {
+          "name": "Get Navbar Hierarchy",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/navbar/hierarchy",
+              "host": ["{{base_url}}"],
+              "path": ["navbar", "hierarchy"]
+            },
+            "description": "Get complete category hierarchy optimized for navbar with URLs and product counts"
+          }
+        },
+        {
+          "name": "Get Category Children (Dynamic)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/navbar/categories/{{category_id}}/children?type=sub_categories",
+              "host": ["{{base_url}}"],
+              "path": ["navbar", "categories", "{{category_id}}", "children"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "sub_categories",
+                  "description": "Type: sub_categories|segments|sub_segments"
+                }
+              ]
+            },
+            "description": "Get children of a category dynamically for navbar dropdowns"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📁 Search & Advanced Filtering",
+      "item": [
+        {
+          "name": "Global Search Products",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/products?search=POWER MIG 211i&per_page=5",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "POWER MIG 211i",
+                  "description": "Search in title and short description"
+                },
+                {
+                  "key": "per_page",
+                  "value": "5"
+                }
+              ]
+            },
+            "description": "Search products globally across title and description"
+          }
+        },
+        {
+          "name": "Price Range Filter",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/products?min_price=1000&max_price=2000&sort_by=price&sort_order=asc",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [
+                {
+                  "key": "min_price",
+                  "value": "1000",
+                  "description": "Minimum price in currency"
+                },
+                {
+                  "key": "max_price",
+                  "value": "2000", 
+                  "description": "Maximum price in currency"
+                },
+                {
+                  "key": "sort_by",
+                  "value": "price",
+                  "description": "Sort by price"
+                },
+                {
+                  "key": "sort_order",
+                  "value": "asc",
+                  "description": "Ascending price order"
+                }
+              ]
+            },
+            "description": "Filter products by price range with sorting"
+          }
+        },
+        {
+          "name": "Multi-Level Category Filter",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/products?category_id=1&sub_category_id=1&segment_id=1&sub_segment_id=1",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [
+                {
+                  "key": "category_id",
+                  "value": "1",
+                  "description": "Filter by category"
+                },
+                {
+                  "key": "sub_category_id", 
+                  "value": "1",
+                  "description": "Filter by sub-category"
+                },
+                {
+                  "key": "segment_id",
+                  "value": "1",
+                  "description": "Filter by segment"
+                },
+                {
+                  "key": "sub_segment_id",
+                  "value": "1",
+                  "description": "Filter by sub-segment"
+                }
+              ]
+            },
+            "description": "Apply multi-level category filtering to products"
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set dynamic variables if needed",
+          "// pm.globals.set('timestamp', new Date().getTime());",
+          "",
+          "// Log request for debugging",
+          "console.log('Making request to:', pm.request.url.toString());"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Basic response tests",
+          "pm.test('Response status code is 200', function () {",
+          "    pm.expect(pm.response.code).to.equal(200);",
+          "});",
+          "",
+          "pm.test('Response has success field', function () {",
+          "    const responseJson = pm.response.json();",
+          "    pm.expect(responseJson).to.have.property('success');",
+          "    pm.expect(responseJson.success).to.be.true;",
+          "});",
+          "",
+          "pm.test('Response has data field', function () {",
+          "    const responseJson = pm.response.json();",
+          "    pm.expect(responseJson).to.have.property('data');",
+          "});",
+          "",
+          "pm.test('Response time is acceptable', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+          "});",
+          "",
+          "// Store ID from response for next requests",
+          "if (pm.response.json().data && pm.response.json().data.id) {",
+          "    pm.globals.set('last_id', pm.response.json().data.id);",
+          "}"
+        ]
+      }
+    }
+  ]
+}
