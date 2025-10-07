@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\CheckoutController;
 
 /*
 |--------------------------------------------------------------------------
@@ -41,12 +42,15 @@ Route::middleware('api')->prefix('v1')->group(function () {
     // Product APIs with filtering
     Route::prefix('products')->group(function () {
         Route::get('/', [ProductController::class, 'index']);
-        Route::get('/{product}', [ProductController::class, 'show']);
+    Route::get('/{product:slug}', [ProductController::class, 'show']);
         Route::get('/category/{category}', [ProductController::class, 'getByCategory']);
         Route::get('/sub-category/{subCategory}', [ProductController::class, 'getBySubCategory']);
         Route::get('/segment/{segment}', [ProductController::class, 'getBySegment']);
         Route::get('/sub-segment/{subSegment}', [ProductController::class, 'getBySubSegment']);
     });
+    
+    // Checkout endpoint
+    Route::post('checkout', [CheckoutController::class, 'store']);
     
     // Special endpoints for navbar
     Route::get('navbar/hierarchy', [CategoryController::class, 'getNavbarHierarchy']);

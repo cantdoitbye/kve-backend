@@ -25,6 +25,7 @@ class SubCategoryController extends Controller
             }
             
             return DataTables::of($query)
+                ->addIndexColumn()
                 ->addColumn('action', function ($subCategory) {
                     return view('admin.sub-categories.actions', compact('subCategory'))->render();
                 })

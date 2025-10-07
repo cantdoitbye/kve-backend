@@ -17,6 +17,8 @@ class SubSegmentController extends Controller
             $subSegments = SubSegment::with(['segment.subCategory.category']);
             
             return DataTables::of($subSegments)
+                            ->addIndexColumn()
+
                 ->addColumn('action', function ($subSegment) {
                     return view('admin.sub-segments.actions', compact('subSegment'));
                 })

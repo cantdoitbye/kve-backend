@@ -90,18 +90,22 @@ class ProductController extends Controller
     /**
      * Get single product with full details
      */
-      public function show(Product $product)
+    public function show($slug)
     {
-        $product->load([
-            'category',
-            'subCategory',
-            'segment',
-            'subSegment',
-            'images' => function($q) {
-                $q->orderBy('sort_order', 'asc');
-            }
-        ]);
-        
+        // Find product by slug explicitly to avoid implicit binding issues
+        $product = Product::where('slug', $slug)
+            ->with([
+                'category',
+                'subCategory',
+                'segment',
+                'subSegment',
+                'images' => function($q) {
+                    $q->orderBy('sort_order', 'asc');
+                }
+            ])
+            ->where('status', true)
+            ->firstOrFail();
+
         return response()->json([
             'success' => true,
             'data' => new ProductResource($product),

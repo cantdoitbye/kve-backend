@@ -78,7 +78,7 @@ class ProductController extends Controller
             'sub_category_id' => 'required|exists:sub_categories,id',
             'segment_id' => 'required|exists:segments,id',
             'sub_segment_id' => 'required|exists:sub_segments,id',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:10240',
             'alt_texts.*' => 'nullable|string|max:255'
         ]);
 
@@ -133,7 +133,7 @@ class ProductController extends Controller
             'sub_category_id' => 'required|exists:sub_categories,id',
             'segment_id' => 'required|exists:segments,id',
             'sub_segment_id' => 'required|exists:sub_segments,id',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:10240',
             'alt_texts.*' => 'nullable|string|max:255'
         ]);
 
