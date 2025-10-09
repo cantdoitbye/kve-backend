@@ -201,27 +201,59 @@
                         <small class="text-muted d-block mt-1">List items that come with the product (e.g., cables, accessories)</small>
                     </div>
 
-                    <!-- Documentation Section -->
+                    <!-- Documentation Section - MULTIPLE -->
                     <div class="mb-3">
                         <label class="form-label fw-bold">Documentation</label>
+                        <div id="documentation-container">
+                            @if(old('documentation'))
+                                @foreach(old('documentation') as $index => $doc)
+                                    <div class="documentation-item border rounded p-3 mb-2 bg-light">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-5">
+                                                <input type="text" class="form-control" name="documentation[{{ $index }}][link_text]" 
+                                                       placeholder="Document Title (e.g., User Manual)" value="{{ $doc['link_text'] ?? '' }}">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <input type="url" class="form-control" name="documentation[{{ $index }}][link]" 
+                                                       placeholder="https://example.com/document.pdf" value="{{ $doc['link'] ?? '' }}">
+                                            </div>
+                                            <div class="col-md-1">
+                                                <button type="button" class="btn btn-danger btn-sm remove-documentation w-100">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            @endif
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="add-documentation">
+                            <i class="fas fa-plus me-1"></i>Add Documentation
+                        </button>
+                        <small class="text-muted d-block mt-1">Add links to PDF manuals or documentation files</small>
+                    </div>
+
+                    <!-- Partner Section - SINGLE -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Partner</label>
                         <div class="border rounded p-3 bg-light">
                             <div class="row">
                                 <div class="col-md-5">
-                                    <input type="text" class="form-control @error('doc_link_text') is-invalid @enderror" 
-                                           name="doc_link_text" placeholder="Document Title (e.g., Product Manual)" value="{{ old('doc_link_text') }}">
-                                    @error('doc_link_text')
+                                    <input type="text" class="form-control @error('partner_label') is-invalid @enderror" 
+                                           name="partner_label" placeholder="Partner Name" value="{{ old('partner_label') }}">
+                                    @error('partner_label')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
                                 <div class="col-md-7">
-                                    <input type="url" class="form-control @error('doc_link') is-invalid @enderror" 
-                                           name="doc_link" placeholder="https://example.com/document.pdf" value="{{ old('doc_link') }}">
-                                    @error('doc_link')
+                                    <input type="url" class="form-control @error('partner_link') is-invalid @enderror" 
+                                           name="partner_link" placeholder="https://partner-website.com" value="{{ old('partner_link') }}">
+                                    @error('partner_link')
                                         <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
                             </div>
-                            <small class="text-muted d-block mt-2">Link to PDF or documentation file</small>
+                            <small class="text-muted d-block mt-2">Partner website or information link</small>
                         </div>
                     </div>
 
@@ -252,6 +284,18 @@
                     </div>
 
                     <!-- END OF NEW OPTIONAL FIELDS -->
+
+                    <!-- Sustainability Checkbox -->
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="is_sustainable" 
+                                   id="is_sustainable" value="1" {{ old('is_sustainable') ? 'checked' : '' }}>
+                            <label class="form-check-label fw-bold" for="is_sustainable">
+                                <i class="fas fa-leaf text-success me-1"></i>Sustainable Product
+                            </label>
+                            <small class="text-muted d-block mt-1">Check if this product is environmentally sustainable</small>
+                        </div>
+                    </div>
 
                     <!-- Enhanced Image Upload Section -->
                     {{-- <div class="mb-3">
@@ -349,6 +393,7 @@
         // ========================================
         
         let serviceInfoIndex = {{ old('service_info') ? count(old('service_info')) : 0 }};
+        let documentationIndex = {{ old('documentation') ? count(old('documentation')) : 0 }};
         
         // Service Info Management
         $('#add-service-info').click(function() {
@@ -379,6 +424,37 @@
         // Remove service info
         $(document).on('click', '.remove-service-info', function() {
             $(this).closest('.service-info-item').remove();
+        });
+
+        // Documentation Management - MULTIPLE
+        $('#add-documentation').click(function() {
+            const container = $('#documentation-container');
+            const html = `
+                <div class="documentation-item border rounded p-3 mb-2 bg-light">
+                    <div class="row align-items-center">
+                        <div class="col-md-5">
+                            <input type="text" class="form-control" name="documentation[${documentationIndex}][link_text]" 
+                                   placeholder="Document Title (e.g., User Manual)">
+                        </div>
+                        <div class="col-md-6">
+                            <input type="url" class="form-control" name="documentation[${documentationIndex}][link]" 
+                                   placeholder="https://example.com/document.pdf">
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-danger btn-sm remove-documentation w-100">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.append(html);
+            documentationIndex++;
+        });
+
+        // Remove documentation
+        $(document).on('click', '.remove-documentation', function() {
+            $(this).closest('.documentation-item').remove();
         });
 
         // Included Items Management

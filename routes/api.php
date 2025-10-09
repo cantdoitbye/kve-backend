@@ -47,6 +47,8 @@ Route::middleware('api')->prefix('v1')->group(function () {
         Route::get('/sub-category/{subCategory}', [ProductController::class, 'getBySubCategory']);
         Route::get('/segment/{segment}', [ProductController::class, 'getBySegment']);
         Route::get('/sub-segment/{subSegment}', [ProductController::class, 'getBySubSegment']);
+            Route::get('/featured', [ProductController::class, 'getFeaturedProducts']); // ADD THIS LINE
+
     });
     
     // Checkout endpoint

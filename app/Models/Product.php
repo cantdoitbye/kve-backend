@@ -13,17 +13,20 @@ class Product extends Model
     protected $fillable = [
         'title', 'slug', 'short_description', 'price', 'product_details',
         'specifications', 'category_id', 'sub_category_id', 'segment_id',
-        'sub_segment_id', 'status', 'service_info', 'included', 'documentation', 'input_types', 'sku'
+        'sub_segment_id', 'status', 'service_info', 'included', 'documentation', 'input_types', 'sku', 'output_types', 'is_featured', 'is_sustainable', 'partner'
     ];
 
     protected $casts = [
         'price' => 'decimal:2',
+            'is_featured' => 'boolean',
         'status' => 'boolean',
           'service_info' => 'array',
         'included' => 'array',
         'documentation' => 'array',
         'input_types' => 'array',
-        'output_types' => 'array'
+        'output_types' => 'array',
+        'is_sustainable' => 'boolean',
+        'partner' => 'array',
     ];
 
     protected static function boot()

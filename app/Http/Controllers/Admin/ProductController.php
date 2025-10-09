@@ -53,7 +53,28 @@ class ProductController extends Controller
                         '<span class="badge bg-success">Active</span>' : 
                         '<span class="badge bg-danger">Inactive</span>';
                 })
-                ->rawColumns(['action', 'image', 'image_count', 'status'])
+                   ->addColumn('featured', function ($product) {
+        $checked = $product->is_featured ? 'checked' : '';
+        $badgeClass = $product->is_featured ? 'bg-warning' : 'bg-secondary';
+        $badgeText = $product->is_featured ? 'Featured' : 'Regular';
+        
+        return '
+            <div class="form-check form-switch">
+                <input class="form-check-input" 
+                       type="checkbox" 
+                       role="switch"
+                       id="featured-' . $product->id . '" 
+                       ' . $checked . '
+                       onchange="toggleFeatured(' . $product->id . ', this)">
+                <label class="form-check-label" for="featured-' . $product->id . '">
+                    <span class="badge ' . $badgeClass . ' text-white">
+                        <i class="fas fa-star me-1"></i>
+                        ' . $badgeText . '
+                    </span>
+                </label>
+            </div>';
+    })
+                ->rawColumns(['action', 'image', 'image_count', 'status','featured'])
                 ->make(true);
         }
 
@@ -68,7 +89,6 @@ class ProductController extends Controller
     }
 
    // Replace your store() and update() methods in ProductController with these clean versions
-
 public function store(Request $request)
 {
     $request->validate([
@@ -88,10 +108,13 @@ public function store(Request $request)
         'service_info.*.link_text' => 'nullable|string|max:255',
         'service_info.*.link' => 'nullable|url|max:500',
         'included.*' => 'nullable|string|max:255',
-        'doc_link_text' => 'nullable|string|max:255',
-        'doc_link' => 'nullable|url|max:500',
+        'documentation.*.link_text' => 'nullable|string|max:255',
+        'documentation.*.link' => 'nullable|url|max:500',
+        'partner_label' => 'nullable|string|max:255',
+        'partner_link' => 'nullable|url|max:500',
         'input_types' => 'nullable|json',
         'output_types' => 'nullable|json',
+        'is_sustainable' => 'nullable|boolean',
     ]);
 
     DB::beginTransaction();
@@ -102,8 +125,9 @@ public function store(Request $request)
             'images', 
             'alt_texts', 
             'service_info', 
-            'doc_link_text', 
-            'doc_link', 
+            'documentation',
+            'partner_label',
+            'partner_link',
             'input_types', 
             'output_types', 
             'included'
@@ -129,19 +153,32 @@ public function store(Request $request)
             $data['included'] = null;
         }
         
-        // Handle documentation - only save if both fields are filled
-        if ($request->filled('doc_link_text') && $request->filled('doc_link')) {
-            $data['documentation'] = [
-                'link_text' => $request->doc_link_text,
-                'link' => $request->doc_link
-            ];
+        // Handle documentation - multiple entries
+        if ($request->has('documentation')) {
+            $documentation = array_filter($request->documentation, function($item) {
+                return !empty($item['link_text']) && !empty($item['link']);
+            });
+            $data['documentation'] = !empty($documentation) ? array_values($documentation) : null;
         } else {
             $data['documentation'] = null;
+        }
+        
+        // Handle partner - single entry
+        if ($request->filled('partner_label') && $request->filled('partner_link')) {
+            $data['partner'] = [
+                'label' => $request->partner_label,
+                'link' => $request->partner_link
+            ];
+        } else {
+            $data['partner'] = null;
         }
         
         // Handle input_types and output_types - decode JSON strings
         $data['input_types'] = $request->filled('input_types') ? json_decode($request->input_types, true) : null;
         $data['output_types'] = $request->filled('output_types') ? json_decode($request->output_types, true) : null;
+        
+        // Handle is_sustainable checkbox
+        $data['is_sustainable'] = $request->has('is_sustainable') ? true : false;
         
         // Create product
         $product = Product::create($data);
@@ -181,7 +218,24 @@ public function store(Request $request)
         return view('admin.products.edit', compact('product', 'categories', 'subCategories', 'segments', 'subSegments'));
     }
 
-  public function update(Request $request, Product $product)
+    public function toggleFeatured(Request $request, Product $product)
+{
+    $request->validate([
+        'is_featured' => 'required|boolean'
+    ]);
+    
+    $product->update([
+        'is_featured' => $request->is_featured
+    ]);
+    
+    return response()->json([
+        'success' => true,
+        'message' => 'Featured status updated successfully',
+        'is_featured' => $product->is_featured
+    ]);
+}
+
+ public function update(Request $request, Product $product)
 {
     $request->validate([
         'title' => 'required|max:255|unique:products,title,' . $product->id,
@@ -200,10 +254,13 @@ public function store(Request $request)
         'service_info.*.link_text' => 'nullable|string|max:255',
         'service_info.*.link' => 'nullable|url|max:500',
         'included.*' => 'nullable|string|max:255',
-        'doc_link_text' => 'nullable|string|max:255',
-        'doc_link' => 'nullable|url|max:500',
+        'documentation.*.link_text' => 'nullable|string|max:255',
+        'documentation.*.link' => 'nullable|url|max:500',
+        'partner_label' => 'nullable|string|max:255',
+        'partner_link' => 'nullable|url|max:500',
         'input_types' => 'nullable|json',
         'output_types' => 'nullable|json',
+        'is_sustainable' => 'nullable|boolean',
     ]);
 
     DB::beginTransaction();
@@ -215,8 +272,9 @@ public function store(Request $request)
             'alt_texts', 
             'remove_images', 
             'service_info', 
-            'doc_link_text', 
-            'doc_link', 
+            'documentation',
+            'partner_label',
+            'partner_link',
             'input_types', 
             'output_types', 
             'included'
@@ -242,19 +300,32 @@ public function store(Request $request)
             $data['included'] = null;
         }
         
-        // Handle documentation - only save if both fields are filled
-        if ($request->filled('doc_link_text') && $request->filled('doc_link')) {
-            $data['documentation'] = [
-                'link_text' => $request->doc_link_text,
-                'link' => $request->doc_link
-            ];
+        // Handle documentation - multiple entries
+        if ($request->has('documentation')) {
+            $documentation = array_filter($request->documentation, function($item) {
+                return !empty($item['link_text']) && !empty($item['link']);
+            });
+            $data['documentation'] = !empty($documentation) ? array_values($documentation) : null;
         } else {
             $data['documentation'] = null;
+        }
+        
+        // Handle partner - single entry
+        if ($request->filled('partner_label') && $request->filled('partner_link')) {
+            $data['partner'] = [
+                'label' => $request->partner_label,
+                'link' => $request->partner_link
+            ];
+        } else {
+            $data['partner'] = null;
         }
         
         // Handle input_types and output_types - decode JSON strings
         $data['input_types'] = $request->filled('input_types') ? json_decode($request->input_types, true) : null;
         $data['output_types'] = $request->filled('output_types') ? json_decode($request->output_types, true) : null;
+        
+        // Handle is_sustainable checkbox
+        $data['is_sustainable'] = $request->has('is_sustainable') ? true : false;
         
         // Update product
         $product->update($data);

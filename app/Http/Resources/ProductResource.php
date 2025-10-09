@@ -45,6 +45,10 @@ class ProductResource extends JsonResource
             'documentation' => $this->documentation,
             'has_documentation' => !is_null($this->documentation) && is_array($this->documentation),
             
+                'partner' => $this->partner,
+            'has_partner' => !is_null($this->partner) && is_array($this->partner) && isset($this->partner['link']) && isset($this->partner['label']),
+            
+
             // Optional Fields - Input Types (always present, even if null)
             'input_types' => $this->input_types,
             'has_input_types' => !is_null($this->input_types) && is_array($this->input_types) && count($this->input_types) > 0,
@@ -53,6 +57,8 @@ class ProductResource extends JsonResource
             'output_types' => $this->output_types,
             'has_output_types' => !is_null($this->output_types) && is_array($this->output_types) && count($this->output_types) > 0,
             
+            'is_sustainable' => $this->is_sustainable,
+
             // Category Relations
             'category' => new CategoryResource($this->whenLoaded('category')),
             'sub_category' => new SubCategoryResource($this->whenLoaded('subCategory')),

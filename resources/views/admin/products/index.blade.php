@@ -54,6 +54,7 @@
                         <th width="100px">Images</th>
                         <th width="80px">Status</th>
                         <th width="100px">Created</th>
+                        <th>Featured</th>
                         <th width="120px">Actions</th>
                     </tr>
                 </thead>
@@ -100,6 +101,7 @@
                 {data: 'image_count', name: 'image_count', orderable: false, searchable: false},
                 {data: 'status', name: 'status', orderable: false, searchable: false},
                 {data: 'created_at', name: 'created_at'},
+                    {data: 'featured', name: 'featured', orderable: false, searchable: false},
                 {data: 'action', name: 'action', orderable: false, searchable: false}
             ],
             order: [[6, 'desc']],
@@ -120,6 +122,78 @@
         // Global reference for delete function
         window.dataTable = dataTable;
     }
+
+    function toggleFeatured(productId, checkbox) {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+    const badge = checkbox.nextElementSibling.querySelector('.badge');
+    const originalState = checkbox.checked;
+    
+    fetch(`/admin/products/${productId}/toggle-featured`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            is_featured: checkbox.checked
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Update badge
+            if (checkbox.checked) {
+                badge.classList.remove('bg-secondary');
+                badge.classList.add('bg-warning');
+                badge.innerHTML = '<i class="fas fa-star me-1"></i>Featured';
+            } else {
+                badge.classList.remove('bg-warning');
+                badge.classList.add('bg-secondary');
+                badge.innerHTML = '<i class="fas fa-star me-1"></i>Regular';
+            }
+            
+            // Show success notification
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: data.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } else if (typeof toastr !== 'undefined') {
+                toastr.success(data.message);
+            }
+        } else {
+            throw new Error(data.message || 'Failed to update');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        
+        // Revert checkbox to original state
+        checkbox.checked = !originalState;
+        
+        // Show error notification
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: 'Failed to update featured status',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        } else if (typeof toastr !== 'undefined') {
+            toastr.error('Failed to update featured status');
+        }
+    });
+}
     
     function refreshTable() {
         dataTable.ajax.reload();

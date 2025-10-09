@@ -45,13 +45,16 @@ Route::middleware('auth')->prefix('admin')->name('admin.')->group(function () {
     Route::get('products/sub-categories/{category}', [ProductController::class, 'getSubCategories']);
     Route::get('products/segments/{subCategory}', [ProductController::class, 'getSegments']);
     Route::get('products/sub-segments/{segment}', [ProductController::class, 'getSubSegments']);
-    
+      Route::post('/products/{product}/toggle-featured', [ProductController::class, 'toggleFeatured'])
+    ->name('products.toggle-featured');
     // Product Images Management
     Route::prefix('products/{product}/images')->name('products.images.')->group(function () {
         Route::get('/', [ProductImageController::class, 'index'])->name('index');
         Route::post('/', [ProductImageController::class, 'store'])->name('store');
         Route::post('/update-order', [ProductImageController::class, 'updateOrder'])->name('update-order');
     });
+
+  
     
     // Individual image operations
     Route::prefix('product-images')->name('product-images.')->group(function () {

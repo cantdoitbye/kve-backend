@@ -90,28 +90,120 @@ class ProductController extends Controller
     /**
      * Get single product with full details
      */
+    // public function show($slug)
+    // {
+    //     // Find product by slug explicitly to avoid implicit binding issues
+    //     $product = Product::where('slug', $slug)
+    //         ->with([
+    //             'category',
+    //             'subCategory',
+    //             'segment',
+    //             'subSegment',
+    //             'images' => function($q) {
+    //                 $q->orderBy('sort_order', 'asc');
+    //             }
+    //         ])
+    //         ->where('status', true)
+    //         ->firstOrFail();
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'data' => new ProductResource($product),
+    //         'message' => 'Product retrieved successfully'
+    //     ]);
+    // }
+
     public function show($slug)
-    {
-        // Find product by slug explicitly to avoid implicit binding issues
-        $product = Product::where('slug', $slug)
+{
+    // Find product by slug
+    $product = Product::where('slug', $slug)
+        ->with([
+            'category',
+            'subCategory',
+            'segment',
+            'subSegment',
+            'images' => function($q) {
+                $q->orderBy('sort_order', 'asc');
+            }
+        ])
+        ->where('status', true)
+        ->firstOrFail();
+
+    // Get Related Products (same sub-segment, exclude current product)
+    $relatedProducts = Product::where('sub_segment_id', $product->sub_segment_id)
+        ->where('id', '!=', $product->id)
+        ->where('status', true)
+        ->with([
+            'category:id,title,slug',
+            'subCategory:id,title,slug',
+            'images' => function($q) {
+                $q->where('is_primary', true)->orWhere('sort_order', 0);
+            }
+        ])
+        ->inRandomOrder()
+        ->limit(4)
+        ->get();
+
+    // Get You May Also Need Products (same segment, different sub-segment)
+    $youMayAlsoNeed = Product::where('segment_id', $product->segment_id)
+        ->where('sub_segment_id', '!=', $product->sub_segment_id)
+        ->where('id', '!=', $product->id)
+        ->where('status', true)
+        ->with([
+            'category:id,title,slug',
+            'subCategory:id,title,slug',
+            'images' => function($q) {
+                $q->where('is_primary', true)->orWhere('sort_order', 0);
+            }
+        ])
+        ->inRandomOrder()
+        ->limit(4)
+        ->get();
+
+    // Get Popular Products (featured products from same category)
+    $popularProducts = Product::where('category_id', $product->category_id)
+        ->where('is_featured', true)
+        ->where('id', '!=', $product->id)
+        ->where('status', true)
+        ->with([
+            'category:id,title,slug',
+            'subCategory:id,title,slug',
+            'images' => function($q) {
+                $q->where('is_primary', true)->orWhere('sort_order', 0);
+            }
+        ])
+        ->inRandomOrder()
+        ->limit(4)
+        ->get();
+
+    // If no featured products, get random popular products from same category
+    if ($popularProducts->isEmpty()) {
+        $popularProducts = Product::where('category_id', $product->category_id)
+            ->where('id', '!=', $product->id)
+            ->where('status', true)
             ->with([
-                'category',
-                'subCategory',
-                'segment',
-                'subSegment',
+                'category:id,title,slug',
+                'subCategory:id,title,slug',
                 'images' => function($q) {
-                    $q->orderBy('sort_order', 'asc');
+                    $q->where('is_primary', true)->orWhere('sort_order', 0);
                 }
             ])
-            ->where('status', true)
-            ->firstOrFail();
-
-        return response()->json([
-            'success' => true,
-            'data' => new ProductResource($product),
-            'message' => 'Product retrieved successfully'
-        ]);
+            ->inRandomOrder()
+            ->limit(4)
+            ->get();
     }
+
+    return response()->json([
+        'success' => true,
+        'data' => [
+            'product' => new ProductResource($product),
+            'related_products' => ProductResource::collection($relatedProducts),
+            'you_may_also_need' => ProductResource::collection($youMayAlsoNeed),
+            'popular_products' => ProductResource::collection($popularProducts),
+        ],
+        'message' => 'Product retrieved successfully'
+    ]);
+}
     
     /**
      * Get products by category
@@ -235,4 +327,44 @@ class ProductController extends Controller
             'message' => $message
         ]);
     }
+
+    public function getFeaturedProducts(Request $request)
+{
+    $query = Product::where('status', true)
+        ->where('is_featured', true)
+        ->with([
+            'category:id,title,slug',
+            'subCategory:id,title,slug',
+            'segment:id,title,slug',
+            'subSegment:id,title,slug',
+            'images' => function($q) {
+                $q->where('is_primary', true)->orWhere('sort_order', 0);
+            }
+        ]);
+    
+    // Optional filters
+    if ($request->filled('category_id')) {
+        $query->where('category_id', $request->category_id);
+    }
+    
+    if ($request->filled('limit')) {
+        $limit = min($request->integer('limit'), 50);
+        $products = $query->limit($limit)->get();
+        
+        return response()->json([
+            'success' => true,
+            'data' => ProductResource::collection($products),
+            'message' => 'Featured products retrieved successfully'
+        ]);
+    }
+    
+    $perPage = $request->input('per_page', 10);
+    $products = $query->paginate($perPage);
+    
+    return response()->json([
+        'success' => true,
+        'data' => ProductResource::collection($products),
+        'message' => 'Featured products retrieved successfully'
+    ]);
+}
 }
