@@ -42,12 +42,12 @@ Route::middleware('api')->prefix('v1')->group(function () {
     // Product APIs with filtering
     Route::prefix('products')->group(function () {
         Route::get('/', [ProductController::class, 'index']);
+                    Route::get('/featured', [ProductController::class, 'getFeaturedProducts']); // ADD THIS LINE
     Route::get('/{product:slug}', [ProductController::class, 'show']);
         Route::get('/category/{category}', [ProductController::class, 'getByCategory']);
         Route::get('/sub-category/{subCategory}', [ProductController::class, 'getBySubCategory']);
         Route::get('/segment/{segment}', [ProductController::class, 'getBySegment']);
         Route::get('/sub-segment/{subSegment}', [ProductController::class, 'getBySubSegment']);
-            Route::get('/featured', [ProductController::class, 'getFeaturedProducts']); // ADD THIS LINE
 
     });
     
