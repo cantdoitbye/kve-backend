@@ -67,42 +67,101 @@ class ProductController extends Controller
         return view('admin.products.create', compact('categories'));
     }
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'title' => 'required|max:255|unique:products,title',
-            'short_description' => 'required',
-            'price' => 'required|numeric|min:0',
-            'product_details' => 'required',
-            'category_id' => 'required|exists:categories,id',
-            'sub_category_id' => 'required|exists:sub_categories,id',
-            'segment_id' => 'required|exists:segments,id',
-            'sub_segment_id' => 'required|exists:sub_segments,id',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:10240',
-            'alt_texts.*' => 'nullable|string|max:255'
-        ]);
+   // Replace your store() and update() methods in ProductController with these clean versions
 
-        DB::beginTransaction();
+public function store(Request $request)
+{
+    $request->validate([
+        'title' => 'required|max:255|unique:products,title',
+        'sku' => 'nullable|string|max:100',
+        'short_description' => 'required',
+        'price' => 'required|numeric|min:0',
+        'product_details' => 'required',
+        'category_id' => 'required|exists:categories,id',
+        'sub_category_id' => 'required|exists:sub_categories,id',
+        'segment_id' => 'required|exists:segments,id',
+        'sub_segment_id' => 'required|exists:sub_segments,id',
+        'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:10240',
+        'alt_texts.*' => 'nullable|string|max:255',
         
-        try {
-            // Create product
-            $product = Product::create($request->except(['images', 'alt_texts']));
-            
-            // Handle image uploads
-            if ($request->hasFile('images')) {
-                $this->uploadProductImages($product, $request->file('images'), $request->input('alt_texts', []));
-            }
-            
-            DB::commit();
-            
-            return redirect()->route('admin.products.index')
-                ->with('success', 'Product created successfully.');
-                
-        } catch (\Exception $e) {
-            DB::rollback();
-            return back()->with('error', 'Error creating product: ' . $e->getMessage())->withInput();
+        // New optional fields validation
+        'service_info.*.link_text' => 'nullable|string|max:255',
+        'service_info.*.link' => 'nullable|url|max:500',
+        'included.*' => 'nullable|string|max:255',
+        'doc_link_text' => 'nullable|string|max:255',
+        'doc_link' => 'nullable|url|max:500',
+        'input_types' => 'nullable|json',
+        'output_types' => 'nullable|json',
+    ]);
+
+    DB::beginTransaction();
+    
+    try {
+        // Prepare base data (exclude special fields that need processing)
+        $data = $request->except([
+            'images', 
+            'alt_texts', 
+            'service_info', 
+            'doc_link_text', 
+            'doc_link', 
+            'input_types', 
+            'output_types', 
+            'included'
+        ]);
+        
+        // Handle service_info - filter out empty entries
+        if ($request->has('service_info')) {
+            $serviceInfo = array_filter($request->service_info, function($item) {
+                return !empty($item['link_text']) && !empty($item['link']);
+            });
+            $data['service_info'] = !empty($serviceInfo) ? array_values($serviceInfo) : null;
+        } else {
+            $data['service_info'] = null;
         }
+        
+        // Handle included items - filter out empty entries
+        if ($request->has('included')) {
+            $included = array_filter($request->included, function($item) {
+                return !empty($item);
+            });
+            $data['included'] = !empty($included) ? array_values($included) : null;
+        } else {
+            $data['included'] = null;
+        }
+        
+        // Handle documentation - only save if both fields are filled
+        if ($request->filled('doc_link_text') && $request->filled('doc_link')) {
+            $data['documentation'] = [
+                'link_text' => $request->doc_link_text,
+                'link' => $request->doc_link
+            ];
+        } else {
+            $data['documentation'] = null;
+        }
+        
+        // Handle input_types and output_types - decode JSON strings
+        $data['input_types'] = $request->filled('input_types') ? json_decode($request->input_types, true) : null;
+        $data['output_types'] = $request->filled('output_types') ? json_decode($request->output_types, true) : null;
+        
+        // Create product
+        $product = Product::create($data);
+        
+        // Handle image uploads
+        if ($request->hasFile('images')) {
+            $this->uploadProductImages($product, $request->file('images'), $request->input('alt_texts', []));
+        }
+        
+        DB::commit();
+        
+        return redirect()->route('admin.products.index')
+            ->with('success', 'Product created successfully.');
+            
+    } catch (\Exception $e) {
+        DB::rollback();
+        return back()->with('error', 'Error creating product: ' . $e->getMessage())->withInput();
     }
+}
+
 
     public function show(Product $product)
     {
@@ -122,47 +181,104 @@ class ProductController extends Controller
         return view('admin.products.edit', compact('product', 'categories', 'subCategories', 'segments', 'subSegments'));
     }
 
-    public function update(Request $request, Product $product)
-    {
-        $request->validate([
-            'title' => 'required|max:255|unique:products,title,' . $product->id,
-            'short_description' => 'required',
-            'price' => 'required|numeric|min:0',
-            'product_details' => 'required',
-            'category_id' => 'required|exists:categories,id',
-            'sub_category_id' => 'required|exists:sub_categories,id',
-            'segment_id' => 'required|exists:segments,id',
-            'sub_segment_id' => 'required|exists:sub_segments,id',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:10240',
-            'alt_texts.*' => 'nullable|string|max:255'
-        ]);
-
-        DB::beginTransaction();
+  public function update(Request $request, Product $product)
+{
+    $request->validate([
+        'title' => 'required|max:255|unique:products,title,' . $product->id,
+        'sku' => 'nullable|string|max:100',
+        'short_description' => 'required',
+        'price' => 'required|numeric|min:0',
+        'product_details' => 'required',
+        'category_id' => 'required|exists:categories,id',
+        'sub_category_id' => 'required|exists:sub_categories,id',
+        'segment_id' => 'required|exists:segments,id',
+        'sub_segment_id' => 'required|exists:sub_segments,id',
+        'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:10240',
+        'alt_texts.*' => 'nullable|string|max:255',
         
-        try {
-            // Update product
-            $product->update($request->except(['images', 'alt_texts', 'remove_images']));
-            
-            // Handle image removal
-            if ($request->filled('remove_images')) {
-                $this->removeProductImages($request->input('remove_images'));
-            }
-            
-            // Handle new image uploads
-            if ($request->hasFile('images')) {
-                $this->uploadProductImages($product, $request->file('images'), $request->input('alt_texts', []));
-            }
-            
-            DB::commit();
-            
-            return redirect()->route('admin.products.index')
-                ->with('success', 'Product updated successfully.');
-                
-        } catch (\Exception $e) {
-            DB::rollback();
-            return back()->with('error', 'Error updating product: ' . $e->getMessage())->withInput();
+        // New optional fields validation
+        'service_info.*.link_text' => 'nullable|string|max:255',
+        'service_info.*.link' => 'nullable|url|max:500',
+        'included.*' => 'nullable|string|max:255',
+        'doc_link_text' => 'nullable|string|max:255',
+        'doc_link' => 'nullable|url|max:500',
+        'input_types' => 'nullable|json',
+        'output_types' => 'nullable|json',
+    ]);
+
+    DB::beginTransaction();
+    
+    try {
+        // Prepare base data (exclude special fields that need processing)
+        $data = $request->except([
+            'images', 
+            'alt_texts', 
+            'remove_images', 
+            'service_info', 
+            'doc_link_text', 
+            'doc_link', 
+            'input_types', 
+            'output_types', 
+            'included'
+        ]);
+        
+        // Handle service_info - filter out empty entries
+        if ($request->has('service_info')) {
+            $serviceInfo = array_filter($request->service_info, function($item) {
+                return !empty($item['link_text']) && !empty($item['link']);
+            });
+            $data['service_info'] = !empty($serviceInfo) ? array_values($serviceInfo) : null;
+        } else {
+            $data['service_info'] = null;
         }
+        
+        // Handle included items - filter out empty entries
+        if ($request->has('included')) {
+            $included = array_filter($request->included, function($item) {
+                return !empty($item);
+            });
+            $data['included'] = !empty($included) ? array_values($included) : null;
+        } else {
+            $data['included'] = null;
+        }
+        
+        // Handle documentation - only save if both fields are filled
+        if ($request->filled('doc_link_text') && $request->filled('doc_link')) {
+            $data['documentation'] = [
+                'link_text' => $request->doc_link_text,
+                'link' => $request->doc_link
+            ];
+        } else {
+            $data['documentation'] = null;
+        }
+        
+        // Handle input_types and output_types - decode JSON strings
+        $data['input_types'] = $request->filled('input_types') ? json_decode($request->input_types, true) : null;
+        $data['output_types'] = $request->filled('output_types') ? json_decode($request->output_types, true) : null;
+        
+        // Update product
+        $product->update($data);
+        
+        // Handle image removal
+        if ($request->filled('remove_images')) {
+            $this->removeProductImages($request->input('remove_images'));
+        }
+        
+        // Handle new image uploads
+        if ($request->hasFile('images')) {
+            $this->uploadProductImages($product, $request->file('images'), $request->input('alt_texts', []));
+        }
+        
+        DB::commit();
+        
+        return redirect()->route('admin.products.index')
+            ->with('success', 'Product updated successfully.');
+            
+    } catch (\Exception $e) {
+        DB::rollback();
+        return back()->with('error', 'Error updating product: ' . $e->getMessage())->withInput();
     }
+}
 
     public function destroy(Product $product)
     {

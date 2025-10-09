@@ -1,13 +1,14 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
 use App\Models\Checkout;
 use Illuminate\Http\Request;
 
 class CheckoutController extends Controller
 {
-    /**
+      /**
      * Store a new checkout.
      *
      * Accepts: name, mobile, message, product_ids (array or JSON string)

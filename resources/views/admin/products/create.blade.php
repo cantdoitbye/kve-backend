@@ -16,8 +16,9 @@
                 <form action="{{ route('admin.products.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     
+                    <!-- Title, SKU, and Price Row -->
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-5">
                             <div class="mb-3">
                                 <label for="title" class="form-label fw-bold">Product Title <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control @error('title') is-invalid @enderror" 
@@ -29,7 +30,19 @@
                             </div>
                         </div>
                         
-                        <div class="col-md-6">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="sku" class="form-label fw-bold">SKU</label>
+                                <input type="text" class="form-control @error('sku') is-invalid @enderror" 
+                                       id="sku" name="sku" value="{{ old('sku') }}" 
+                                       placeholder="Product SKU">
+                                @error('sku')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="price" class="form-label fw-bold">Price (₹) <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control @error('price') is-invalid @enderror" 
@@ -130,8 +143,118 @@
                         @enderror
                     </div>
 
-                    <!-- Enhanced Image Upload Section -->
+                    <!-- NEW OPTIONAL FIELDS START HERE -->
+                    
+                    <!-- Service Information Section -->
                     <div class="mb-3">
+                        <label class="form-label fw-bold">Service Information Links</label>
+                        <div id="service-info-container">
+                            @if(old('service_info'))
+                                @foreach(old('service_info') as $index => $service)
+                                    <div class="service-info-item border rounded p-3 mb-2 bg-light">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-5">
+                                                <input type="text" class="form-control" name="service_info[{{ $index }}][link_text]" 
+                                                       placeholder="Link Text (e.g., User Manual)" value="{{ $service['link_text'] ?? '' }}">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <input type="url" class="form-control" name="service_info[{{ $index }}][link]" 
+                                                       placeholder="https://example.com" value="{{ $service['link'] ?? '' }}">
+                                            </div>
+                                            <div class="col-md-1">
+                                                <button type="button" class="btn btn-danger btn-sm remove-service-info w-100">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            @endif
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="add-service-info">
+                            <i class="fas fa-plus me-1"></i>Add Service Link
+                        </button>
+                        <small class="text-muted d-block mt-1">Add links to manuals, guides, or related services</small>
+                    </div>
+
+                    <!-- What's Included Section -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">What's Included</label>
+                        <div id="included-container">
+                            @if(old('included'))
+                                @foreach(old('included') as $index => $item)
+                                    <div class="included-item mb-2">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" name="included[]" 
+                                                   placeholder="Item included with product" value="{{ $item }}">
+                                            <button type="button" class="btn btn-danger btn-sm remove-included">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            @endif
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="add-included">
+                            <i class="fas fa-plus me-1"></i>Add Item
+                        </button>
+                        <small class="text-muted d-block mt-1">List items that come with the product (e.g., cables, accessories)</small>
+                    </div>
+
+                    <!-- Documentation Section -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Documentation</label>
+                        <div class="border rounded p-3 bg-light">
+                            <div class="row">
+                                <div class="col-md-5">
+                                    <input type="text" class="form-control @error('doc_link_text') is-invalid @enderror" 
+                                           name="doc_link_text" placeholder="Document Title (e.g., Product Manual)" value="{{ old('doc_link_text') }}">
+                                    @error('doc_link_text')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                                <div class="col-md-7">
+                                    <input type="url" class="form-control @error('doc_link') is-invalid @enderror" 
+                                           name="doc_link" placeholder="https://example.com/document.pdf" value="{{ old('doc_link') }}">
+                                    @error('doc_link')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
+                                </div>
+                            </div>
+                            <small class="text-muted d-block mt-2">Link to PDF or documentation file</small>
+                        </div>
+                    </div>
+
+                    <!-- Input Types Section -->
+                    <div class="mb-3">
+                        <label for="input_types_text" class="form-label fw-bold">Input Types</label>
+                        <input type="text" class="form-control @error('input_types') is-invalid @enderror" 
+                               id="input_types_text" placeholder="Type and press Enter or comma (e.g., 60Hz, 1 Phase, 120V)">
+                        <input type="hidden" name="input_types" id="input_types" value="{{ old('input_types') ? json_encode(old('input_types')) : '' }}">
+                        <div id="input-types-tags" class="mt-2"></div>
+                        @error('input_types')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                        <small class="text-muted">Press Enter or comma after each type</small>
+                    </div>
+
+                    <!-- Output Types Section -->
+                    <div class="mb-3">
+                        <label for="output_types_text" class="form-label fw-bold">Output Types</label>
+                        <input type="text" class="form-control @error('output_types') is-invalid @enderror" 
+                               id="output_types_text" placeholder="Type and press Enter or comma (e.g., AC, DC, CV)">
+                        <input type="hidden" name="output_types" id="output_types" value="{{ old('output_types') ? json_encode(old('output_types')) : '' }}">
+                        <div id="output-types-tags" class="mt-2"></div>
+                        @error('output_types')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                        <small class="text-muted">Press Enter or comma after each type</small>
+                    </div>
+
+                    <!-- END OF NEW OPTIONAL FIELDS -->
+
+                    <!-- Enhanced Image Upload Section -->
+                    {{-- <div class="mb-3">
                         <label for="images" class="form-label fw-bold">Product Images</label>
                         <div class="border rounded p-3 bg-light">
                             <div class="row">
@@ -158,7 +281,7 @@
                             <!-- Image preview -->
                             <div id="image-preview" class="mt-3"></div>
                         </div>
-                    </div>
+                    </div> --}}
 
                     <div class="mb-3">
                         <div class="form-check">
@@ -221,6 +344,137 @@
     });
 
     $(document).ready(function() {
+        // ========================================
+        // NEW OPTIONAL FIELDS JAVASCRIPT START
+        // ========================================
+        
+        let serviceInfoIndex = {{ old('service_info') ? count(old('service_info')) : 0 }};
+        
+        // Service Info Management
+        $('#add-service-info').click(function() {
+            const container = $('#service-info-container');
+            const html = `
+                <div class="service-info-item border rounded p-3 mb-2 bg-light">
+                    <div class="row align-items-center">
+                        <div class="col-md-5">
+                            <input type="text" class="form-control" name="service_info[${serviceInfoIndex}][link_text]" 
+                                   placeholder="Link Text (e.g., User Manual)">
+                        </div>
+                        <div class="col-md-6">
+                            <input type="url" class="form-control" name="service_info[${serviceInfoIndex}][link]" 
+                                   placeholder="https://example.com">
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-danger btn-sm remove-service-info w-100">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.append(html);
+            serviceInfoIndex++;
+        });
+
+        // Remove service info
+        $(document).on('click', '.remove-service-info', function() {
+            $(this).closest('.service-info-item').remove();
+        });
+
+        // Included Items Management
+        $('#add-included').click(function() {
+            const container = $('#included-container');
+            const html = `
+                <div class="included-item mb-2">
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="included[]" 
+                               placeholder="Item included with product">
+                        <button type="button" class="btn btn-danger btn-sm remove-included">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.append(html);
+        });
+
+        // Remove included item
+        $(document).on('click', '.remove-included', function() {
+            $(this).closest('.included-item').remove();
+        });
+
+        // Tags Management for Input/Output Types
+        function initializeTagsInput(inputId, hiddenId, tagsContainerId) {
+            const input = document.getElementById(inputId);
+            const hidden = document.getElementById(hiddenId);
+            const tagsContainer = document.getElementById(tagsContainerId);
+            let tags = [];
+
+            // Load existing tags
+            if (hidden.value) {
+                try {
+                    tags = JSON.parse(hidden.value);
+                    renderTags();
+                } catch (e) {
+                    tags = [];
+                }
+            }
+
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' || e.key === ',') {
+                    e.preventDefault();
+                    const value = input.value.trim().replace(',', '');
+                    addTag(value);
+                }
+            });
+
+            input.addEventListener('blur', function() {
+                const value = input.value.trim();
+                if (value) {
+                    addTag(value);
+                }
+            });
+
+            function addTag(value) {
+                if (value && !tags.includes(value)) {
+                    tags.push(value);
+                    input.value = '';
+                    updateHidden();
+                    renderTags();
+                }
+            }
+
+            function removeTag(index) {
+                tags.splice(index, 1);
+                updateHidden();
+                renderTags();
+            }
+
+            function updateHidden() {
+                hidden.value = JSON.stringify(tags);
+            }
+
+            function renderTags() {
+                tagsContainer.innerHTML = tags.map((tag, index) => `
+                    <span class="badge bg-primary me-2 mb-2" style="font-size: 14px; padding: 8px 12px;">
+                        ${tag}
+                        <i class="fas fa-times ms-2" style="cursor: pointer;" onclick="window.removeTag${hiddenId}(${index})"></i>
+                    </span>
+                `).join('');
+            }
+
+            // Make removeTag function globally accessible
+            window[`removeTag${hiddenId}`] = removeTag;
+        }
+
+        // Initialize tags inputs
+        initializeTagsInput('input_types_text', 'input_types', 'input-types-tags');
+        initializeTagsInput('output_types_text', 'output_types', 'output-types-tags');
+        
+        // ========================================
+        // NEW OPTIONAL FIELDS JAVASCRIPT END
+        // ========================================
+
         // Dependent dropdowns for category hierarchy
         $('#category_id').change(function() {
             const categoryId = $(this).val();
