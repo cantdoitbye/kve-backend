@@ -33,6 +33,10 @@ class ProductResource extends JsonResource
             'images_count' => $this->getImageCount(),
             'images' => ProductImageResource::collection($this->whenLoaded('images')),
             
+            'disclaimer' => $this->disclaimer,
+            'features' => $this->features,
+            
+
             // Optional Fields - Service Information (always present, even if null)
             'service_info' => $this->service_info,
             'has_service_info' => !is_null($this->service_info) && is_array($this->service_info) && count($this->service_info) > 0,

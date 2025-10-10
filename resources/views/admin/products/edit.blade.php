@@ -161,6 +161,64 @@
 
                     <!-- NEW OPTIONAL FIELDS START HERE -->
                     
+                    <div class="mb-3">
+    <label for="disclaimer" class="form-label fw-bold">
+        Disclaimer <span class="text-muted">(Optional)</span>
+    </label>
+    <textarea class="form-control @error('disclaimer') is-invalid @enderror" 
+              id="disclaimer" 
+              name="disclaimer" 
+              rows="4" 
+              placeholder="Enter product disclaimer text">{{ old('disclaimer', $product->disclaimer) }}</textarea>
+    @error('disclaimer')
+        <div class="invalid-feedback">{{ $message }}</div>
+    @enderror
+    <small class="text-muted">Add any disclaimers or important notes about this product</small>
+</div>
+
+<!-- Features (Optional) -->
+<div class="mb-3">
+    <label class="form-label fw-bold">
+        Features <span class="text-muted">(Optional)</span>
+    </label>
+    <div id="features-container">
+        @php
+            $features = old('features', $product->features ?? []);
+        @endphp
+        
+        @if(!empty($features) && is_array($features))
+            @foreach($features as $index => $feature)
+                <div class="input-group mb-2 feature-item">
+                    <input type="text" 
+                           class="form-control @error('features.'.$index) is-invalid @enderror" 
+                           name="features[]" 
+                           value="{{ $feature }}" 
+                           placeholder="Enter feature">
+                    <button type="button" class="btn btn-outline-danger remove-feature" onclick="removeFeature(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    @error('features.'.$index)
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+            @endforeach
+        @else
+            <div class="input-group mb-2 feature-item">
+                <input type="text" 
+                       class="form-control" 
+                       name="features[]" 
+                       placeholder="Enter feature">
+                <button type="button" class="btn btn-outline-danger remove-feature" onclick="removeFeature(this)">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        @endif
+    </div>
+    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addFeature()">
+        <i class="fas fa-plus me-1"></i>Add Feature
+    </button>
+    <small class="text-muted d-block mt-2">Add key features of this product</small>
+</div>
                     <!-- Service Information Section -->
                     <div class="mb-3">
                         <label class="form-label fw-bold">Service Information Links</label>
@@ -650,6 +708,31 @@
                 $(selector).html('<option value="">Select Option</option>');
             });
         }
+
+        function addFeature() {
+    const container = document.getElementById('features-container');
+    const newItem = document.createElement('div');
+    newItem.className = 'input-group mb-2 feature-item';
+    newItem.innerHTML = `
+        <input type="text" class="form-control" name="features[]" placeholder="Enter feature">
+        <button type="button" class="btn btn-outline-danger remove-feature" onclick="removeFeature(this)">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    container.appendChild(newItem);
+}
+
+function removeFeature(button) {
+    const container = document.getElementById('features-container');
+    const items = container.querySelectorAll('.feature-item');
+    
+    if (items.length > 1) {
+        button.closest('.feature-item').remove();
+    } else {
+        // Keep at least one field, just clear its value
+        button.closest('.feature-item').querySelector('input').value = '';
+    }
+}
     });
 </script>
 @endpush

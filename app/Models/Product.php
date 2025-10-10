@@ -13,7 +13,9 @@ class Product extends Model
     protected $fillable = [
         'title', 'slug', 'short_description', 'price', 'product_details',
         'specifications', 'category_id', 'sub_category_id', 'segment_id',
-        'sub_segment_id', 'status', 'service_info', 'included', 'documentation', 'input_types', 'sku', 'output_types', 'is_featured', 'is_sustainable', 'partner'
+        'sub_segment_id', 'status', 'service_info', 'included','disclaimer',
+    'features',  
+         'documentation', 'input_types', 'sku', 'output_types', 'is_featured', 'is_sustainable', 'partner'
     ];
 
     protected $casts = [
@@ -21,6 +23,7 @@ class Product extends Model
             'is_featured' => 'boolean',
         'status' => 'boolean',
           'service_info' => 'array',
+              'features' => 'array',      
         'included' => 'array',
         'documentation' => 'array',
         'input_types' => 'array',

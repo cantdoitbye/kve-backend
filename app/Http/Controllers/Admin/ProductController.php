@@ -103,6 +103,8 @@ public function store(Request $request)
         'sub_segment_id' => 'required|exists:sub_segments,id',
         'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:10240',
         'alt_texts.*' => 'nullable|string|max:255',
+         'disclaimer' => 'nullable|string',              // ADD THIS
+    'features.*' => 'nullable|string|max:255', 
         
         // New optional fields validation
         'service_info.*.link_text' => 'nullable|string|max:255',
@@ -130,7 +132,8 @@ public function store(Request $request)
             'partner_link',
             'input_types', 
             'output_types', 
-            'included'
+            'included',
+             'features' 
         ]);
         
         // Handle service_info - filter out empty entries
@@ -172,6 +175,15 @@ public function store(Request $request)
         } else {
             $data['partner'] = null;
         }
+
+        if ($request->has('features')) {
+    $features = array_filter($request->features, function($item) {
+        return !empty($item);
+    });
+    $data['features'] = !empty($features) ? array_values($features) : null;
+} else {
+    $data['features'] = null;
+}
         
         // Handle input_types and output_types - decode JSON strings
         $data['input_types'] = $request->filled('input_types') ? json_decode($request->input_types, true) : null;
@@ -249,6 +261,8 @@ public function store(Request $request)
         'sub_segment_id' => 'required|exists:sub_segments,id',
         'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:10240',
         'alt_texts.*' => 'nullable|string|max:255',
+           'disclaimer' => 'nullable|string',              // ADD THIS
+    'features.*' => 'nullable|string|max:255',
         
         // New optional fields validation
         'service_info.*.link_text' => 'nullable|string|max:255',
@@ -277,7 +291,8 @@ public function store(Request $request)
             'partner_link',
             'input_types', 
             'output_types', 
-            'included'
+            'included',
+            'features'          // ADD THIS
         ]);
         
         // Handle service_info - filter out empty entries
@@ -319,6 +334,15 @@ public function store(Request $request)
         } else {
             $data['partner'] = null;
         }
+
+        if ($request->has('features')) {
+    $features = array_filter($request->features, function($item) {
+        return !empty($item);
+    });
+    $data['features'] = !empty($features) ? array_values($features) : null;
+} else {
+    $data['features'] = null;
+}
         
         // Handle input_types and output_types - decode JSON strings
         $data['input_types'] = $request->filled('input_types') ? json_decode($request->input_types, true) : null;
