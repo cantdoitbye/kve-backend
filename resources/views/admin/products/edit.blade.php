@@ -24,7 +24,7 @@
                                 <label for="title" class="form-label fw-bold">Product Title <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control @error('title') is-invalid @enderror" 
                                        id="title" name="title" value="{{ old('title', $product->title) }}" 
-                                       placeholder="Enter product title" required>
+                                       placeholder="Enter product title">
                                 @error('title')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
