@@ -23,7 +23,7 @@
                                 <label for="title" class="form-label fw-bold">Product Title <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control @error('title') is-invalid @enderror" 
                                        id="title" name="title" value="{{ old('title') }}" 
-                                       placeholder="Enter product title">
+                                       placeholder="Enter product title" required>
                                 @error('title')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -47,7 +47,7 @@
                                 <label for="price" class="form-label fw-bold">Price (₹) <span class="text-danger">*</span></label>
                                 <input type="number" class="form-control @error('price') is-invalid @enderror" 
                                        id="price" name="price" value="{{ old('price') }}" 
-                                       placeholder="0.00" step="0.01" min="0" required>
+                                       placeholder="0.00" step="0.01" min="0">
                                 @error('price')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
