@@ -165,7 +165,7 @@
     <label for="disclaimer" class="form-label fw-bold">
         Disclaimer <span class="text-muted">(Optional)</span>
     </label>
-    <textarea class="form-control @error('disclaimer') is-invalid @enderror" 
+    <textarea class="form-control tinymce @error('disclaimer') is-invalid @enderror" 
               id="disclaimer" 
               name="disclaimer" 
               rows="4" 
@@ -194,7 +194,7 @@
                            name="features[]" 
                            value="{{ $feature }}" 
                            placeholder="Enter feature">
-                    <button type="button" class="btn btn-outline-danger remove-feature" onclick="removeFeature(this)">
+                    <button type="button" class="btn btn-outline-danger" onclick="removeFeatureItem(this)">
                         <i class="fas fa-times"></i>
                     </button>
                     @error('features.'.$index)
@@ -208,13 +208,13 @@
                        class="form-control" 
                        name="features[]" 
                        placeholder="Enter feature">
-                <button type="button" class="btn btn-outline-danger remove-feature" onclick="removeFeature(this)">
+                <button type="button" class="btn btn-outline-danger" onclick="removeFeatureItem(this)">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
         @endif
     </div>
-    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addFeature()">
+    <button type="button" class="btn btn-sm btn-outline-primary" id="add-feature-btn">
         <i class="fas fa-plus me-1"></i>Add Feature
     </button>
     <small class="text-muted d-block mt-2">Add key features of this product</small>
@@ -577,6 +577,19 @@
             $(this).closest('.included-item').remove();
         });
 
+           $('#add-feature-btn').on('click', function() {
+        const container = $('#features-container');
+        const newItem = $(`
+            <div class="input-group mb-2 feature-item">
+                <input type="text" class="form-control" name="features[]" placeholder="Enter feature">
+                <button type="button" class="btn btn-outline-danger" onclick="removeFeatureItem(this)">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `);
+        container.append(newItem);
+    });
+
         // Tags Management for Input/Output Types
         function initializeTagsInput(inputId, hiddenId, tagsContainerId) {
             const input = document.getElementById(inputId);
@@ -731,6 +744,18 @@ function removeFeature(button) {
     } else {
         // Keep at least one field, just clear its value
         button.closest('.feature-item').querySelector('input').value = '';
+    }
+}
+
+function removeFeatureItem(button) {
+    const container = $('#features-container');
+    const items = container.find('.feature-item');
+    
+    if (items.length > 1) {
+        $(button).closest('.feature-item').remove();
+    } else {
+        // Keep at least one field, just clear its value
+        $(button).closest('.feature-item').find('input').val('');
     }
 }
     });
